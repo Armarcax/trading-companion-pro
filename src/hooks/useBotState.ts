@@ -1,7 +1,38 @@
+// Enhanced Bot State Hook - HAYQ Project
+
 import { useState, useEffect, useCallback } from 'react';
-import type { BotStats, MarketData, Trade, Strategy, Exchange, BotConfig } from '@/types/trading';
+import type { BotStats, MarketData, Trade, Exchange, BotConfig } from '@/types/trading';
+import type { MarketState, AggregatedSignal, CandleData } from '@/lib/strategies/types';
+import { RiskConfig, RiskState, defaultRiskConfig } from '@/lib/riskManagement';
+import { StrategyConfig, defaultStrategies, generateSignal } from '@/lib/strategyEngine';
 
 // Mock data generators for MVP
+const generateMockCandles = (count: number = 50): CandleData[] => {
+  const candles: CandleData[] = [];
+  let price = 43256.80;
+  
+  for (let i = 0; i < count; i++) {
+    const change = (Math.random() - 0.5) * 100;
+    const open = price;
+    const close = price + change;
+    const high = Math.max(open, close) + Math.random() * 30;
+    const low = Math.min(open, close) - Math.random() * 30;
+    
+    candles.push({
+      open,
+      high,
+      low,
+      close,
+      volume: 100 + Math.random() * 500,
+      timestamp: new Date(Date.now() - (count - i) * 60000)
+    });
+    
+    price = close;
+  }
+  
+  return candles;
+};
+
 const generateMockMarkets = (): MarketData[] => {
   const btcBase = 43256.80;
   const ethBase = 2845.20;
@@ -44,50 +75,11 @@ const generateMockTrades = (): Trade[] => {
   }));
 };
 
-const initialStrategies: Strategy[] = [
-  {
-    id: 'trend-following',
-    name: 'Trend Following',
-    description: 'EMA crossover with RSI confirmation',
-    enabled: true,
-    performance: 72.4,
-    risk: 'low',
-    tradesCount: 47,
-  },
-  {
-    id: 'mean-reversion',
-    name: 'Mean Reversion',
-    description: 'Bollinger Bands with volume analysis',
-    enabled: true,
-    performance: 65.8,
-    risk: 'medium',
-    tradesCount: 32,
-  },
-  {
-    id: 'scalping',
-    name: 'Scalping',
-    description: 'Quick trades on small price movements',
-    enabled: false,
-    performance: 58.2,
-    risk: 'high',
-    tradesCount: 63,
-  },
-  {
-    id: 'breakout',
-    name: 'Breakout Trading',
-    description: 'Support/resistance breakout detection',
-    enabled: false,
-    performance: 61.5,
-    risk: 'medium',
-    tradesCount: 28,
-  },
-];
-
 const initialExchanges: Exchange[] = [
   { id: 'binance', name: 'Binance', logo: '₿', connected: false, status: 'offline' },
   { id: 'bybit', name: 'Bybit', logo: 'BY', connected: false, status: 'offline' },
+  { id: 'coinbase', name: 'Coinbase', logo: 'CB', connected: false, status: 'offline' },
   { id: 'tradingview', name: 'TradingView', logo: 'TV', connected: false, status: 'offline' },
-  { id: 'pocket-option', name: 'Pocket Option', logo: 'PO', connected: false, status: 'offline' },
 ];
 
 const initialConfig: BotConfig = {
@@ -101,13 +93,27 @@ const initialConfig: BotConfig = {
   rsiPeriod: 14,
 };
 
+const initialRiskState: RiskState = {
+  consecutiveLosses: 0,
+  lastTradeTime: null,
+  currentExposure: 0.05,
+  totalCapital: 10000,
+  dailyPnL: 0,
+  tradesCount: 0
+};
+
 export function useBotState() {
   const [isRunning, setIsRunning] = useState(false);
+  const [tradingMode, setTradingMode] = useState<'signal' | 'trade'>('signal');
   const [markets, setMarkets] = useState<MarketData[]>(generateMockMarkets());
   const [trades, setTrades] = useState<Trade[]>(generateMockTrades());
-  const [strategies, setStrategies] = useState<Strategy[]>(initialStrategies);
   const [exchanges, setExchanges] = useState<Exchange[]>(initialExchanges);
   const [config, setConfig] = useState<BotConfig>(initialConfig);
+  const [riskConfig, setRiskConfig] = useState<RiskConfig>(defaultRiskConfig);
+  const [riskState, setRiskState] = useState<RiskState>(initialRiskState);
+  const [strategies, setStrategies] = useState<StrategyConfig[]>(defaultStrategies);
+  const [currentSignal, setCurrentSignal] = useState<AggregatedSignal | null>(null);
+  const [candles, setCandles] = useState<CandleData[]>(generateMockCandles());
   
   const [stats, setStats] = useState<BotStats>({
     totalProfit: 2456.80,
@@ -120,14 +126,50 @@ export function useBotState() {
     balanceChange: 19.2,
   });
 
-  // Update market data periodically
+  // Generate market state for strategy evaluation
+  const generateMarketState = useCallback((): MarketState => {
+    const closes = candles.map(c => c.close);
+    const avgVolume = candles.slice(-20).reduce((a, c) => a + c.volume, 0) / 20;
+    
+    // Calculate simple support/resistance
+    const recentHighs = candles.slice(-20).map(c => c.high);
+    const recentLows = candles.slice(-20).map(c => c.low);
+    const resistance = Math.max(...recentHighs);
+    const support = Math.min(...recentLows);
+    
+    return {
+      price: candles[candles.length - 1]?.close ?? 0,
+      rsi: 50 + (Math.random() - 0.5) * 40, // Simplified RSI
+      direction: null,
+      volume: candles[candles.length - 1]?.volume ?? 0,
+      avgVolume,
+      support,
+      resistance,
+      candles1m: candles,
+      trend5mPrices: closes.filter((_, i) => i % 5 === 0),
+      trend15mPrices: closes.filter((_, i) => i % 15 === 0)
+    };
+  }, [candles]);
+
+  // Update market data and generate signals periodically
   useEffect(() => {
     if (!isRunning) return;
     
     const interval = setInterval(() => {
+      // Update candles
+      setCandles(prev => {
+        const newCandle = generateMockCandles(1)[0];
+        return [...prev.slice(1), newCandle];
+      });
+      
       setMarkets(generateMockMarkets());
       
-      // Occasionally update stats
+      // Generate signal
+      const marketState = generateMarketState();
+      const signal = generateSignal(marketState, strategies);
+      setCurrentSignal(signal);
+      
+      // Update stats occasionally
       if (Math.random() > 0.7) {
         setStats(prev => ({
           ...prev,
@@ -139,7 +181,7 @@ export function useBotState() {
     }, 3000);
 
     return () => clearInterval(interval);
-  }, [isRunning]);
+  }, [isRunning, strategies, generateMarketState]);
 
   const toggleBot = useCallback(() => {
     setIsRunning(prev => !prev);
@@ -151,6 +193,12 @@ export function useBotState() {
     );
   }, []);
 
+  const updateStrategyWeight = useCallback((id: string, weight: number) => {
+    setStrategies(prev =>
+      prev.map(s => s.id === id ? { ...s, weight } : s)
+    );
+  }, []);
+
   const connectExchange = useCallback((id: string) => {
     setExchanges(prev => 
       prev.map(e => e.id === id 
@@ -159,7 +207,6 @@ export function useBotState() {
       )
     );
     
-    // Simulate connection
     setTimeout(() => {
       setExchanges(prev => 
         prev.map(e => e.id === id 
@@ -183,18 +230,30 @@ export function useBotState() {
     setConfig(prev => ({ ...prev, ...updates }));
   }, []);
 
+  const updateRiskConfig = useCallback((updates: Partial<RiskConfig>) => {
+    setRiskConfig(prev => ({ ...prev, ...updates }));
+  }, []);
+
   return {
     isRunning,
+    tradingMode,
+    setTradingMode,
     markets,
     trades,
     strategies,
     exchanges,
     stats,
     config,
+    riskConfig,
+    riskState,
+    currentSignal,
+    candles,
     toggleBot,
     toggleStrategy,
+    updateStrategyWeight,
     connectExchange,
     disconnectExchange,
     updateConfig,
+    updateRiskConfig,
   };
 }

@@ -64,6 +64,58 @@
     --sidebar-ring: 17 95% 57%;
   }
 
+  /* Light Theme */
+  .light {
+    --background: 0 0% 100%;
+    --foreground: 222 47% 11%;
+
+    --card: 0 0% 98%;
+    --card-foreground: 222 47% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    --primary: 17 95% 50%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 14% 92%;
+    --secondary-foreground: 222 47% 11%;
+
+    --muted: 220 14% 92%;
+    --muted-foreground: 220 9% 46%;
+
+    --accent: 17 95% 50%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 220 14% 88%;
+    --input: 220 14% 88%;
+    --ring: 17 95% 50%;
+
+    --profit: 160 84% 35%;
+    --profit-foreground: 0 0% 100%;
+    --loss: 0 72% 51%;
+    --loss-foreground: 0 0% 100%;
+
+    --gradient-brand: linear-gradient(135deg, hsl(17 95% 50%) 0%, hsl(35 100% 55%) 100%);
+    --gradient-card: linear-gradient(180deg, hsl(0 0% 98%) 0%, hsl(0 0% 96%) 100%);
+    
+    --shadow-glow: 0 0 20px hsl(17 95% 50% / 0.2);
+    --shadow-card: 0 4px 20px hsl(0 0% 0% / 0.1);
+
+    --sidebar-background: 0 0% 97%;
+    --sidebar-foreground: 220 9% 46%;
+    --sidebar-primary: 17 95% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 14% 94%;
+    --sidebar-accent-foreground: 222 47% 11%;
+    --sidebar-border: 220 14% 90%;
+    --sidebar-ring: 17 95% 50%;
+  }
+
+  /* Dark Theme */
   .dark {
     --background: 222 47% 11%;
     --foreground: 210 40% 96%;
@@ -84,6 +136,18 @@
     --border: 217 33% 25%;
     --input: 217 33% 25%;
     --ring: 17 95% 57%;
+    
+    --profit: 160 84% 39%;
+    --profit-foreground: 0 0% 100%;
+    --loss: 0 72% 51%;
+    --loss-foreground: 0 0% 100%;
+    
+    --gradient-brand: linear-gradient(135deg, hsl(17 95% 57%) 0%, hsl(35 100% 60%) 100%);
+    --gradient-card: linear-gradient(180deg, hsl(217 33% 19%) 0%, hsl(217 33% 15%) 100%);
+    
+    --shadow-glow: 0 0 20px hsl(17 95% 57% / 0.3);
+    --shadow-card: 0 4px 20px hsl(222 47% 5% / 0.4);
+    
     --sidebar-background: 217 33% 13%;
     --sidebar-foreground: 215 20% 65%;
     --sidebar-primary: 17 95% 57%;
