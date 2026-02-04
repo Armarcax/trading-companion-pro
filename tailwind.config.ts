@@ -65,6 +65,8 @@ export default {
           DEFAULT: "hsl(var(--loss))",
           foreground: "hsl(var(--loss-foreground))",
         },
+        brand: "hsl(var(--primary))",
+        warning: "hsl(35 92% 50%)",
       },
       borderRadius: {
         lg: "var(--radius)",
