@@ -1,4 +1,4 @@
-// Updated Header with Mode Selector - HAYQ Project
+// Updated Header with Mode Selector & Status - HAYQ Project
 
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
@@ -6,6 +6,7 @@ import type { MarketData } from '@/types/trading';
 import { TrendingUp, TrendingDown, Power } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ModeSelector } from './ModeSelector';
+import { SystemStatus, SystemMode, SystemState, ConnectionState, RiskLevel } from './SystemStatus';
 import { LanguageSelector } from '@/components/LanguageSelector';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
@@ -16,6 +17,10 @@ interface HeaderProps {
   tradingMode: 'signal' | 'trade';
   onToggleBot: () => void;
   onModeChange: (mode: 'signal' | 'trade') => void;
+  systemState?: SystemState;
+  connectionStatus?: ConnectionState;
+  riskLevel?: RiskLevel;
+  dailyPnL?: number;
 }
 
 export function Header({ 
@@ -24,13 +29,32 @@ export function Header({
   isRunning, 
   tradingMode,
   onToggleBot,
-  onModeChange 
+  onModeChange,
+  systemState = 'active',
+  connectionStatus = 'disconnected',
+  riskLevel = 'low',
+  dailyPnL,
 }: HeaderProps) {
   const { t } = useTranslation();
 
+  // Map trading mode to system mode
+  const systemMode: SystemMode = tradingMode === 'trade' ? 'demo' : 'signal';
+
   return (
     <header className="px-6 py-4 border-b border-border flex justify-between items-center flex-wrap gap-4">
-      <h1 className="text-xl font-semibold">{title}</h1>
+      <div className="flex items-center gap-4">
+        <h1 className="text-xl font-semibold">{title}</h1>
+        
+        {/* System Status */}
+        <SystemStatus
+          mode={systemMode}
+          state={isRunning ? systemState : 'paused'}
+          connection={connectionStatus}
+          riskLevel={riskLevel}
+          dailyPnL={dailyPnL}
+          className="hidden md:flex"
+        />
+      </div>
       
       <div className="flex items-center gap-4 flex-wrap">
         {/* Market Prices */}
