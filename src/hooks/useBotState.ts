@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { BotStats, MarketData, Trade, Exchange, BotConfig } from '@/types/trading';
 import type { MarketState, AggregatedSignal, CandleData } from '@/lib/strategies/types';
+import { getExchangeBalance, getExchangeTicker } from '@/lib/exchangeService';
+import { toast } from 'sonner';
 import { RiskConfig, RiskState, defaultRiskConfig } from '@/lib/riskManagement';
 import { StrategyConfig, defaultStrategies, generateSignal } from '@/lib/strategyEngine';
 
@@ -199,22 +201,67 @@ export function useBotState() {
     );
   }, []);
 
-  const connectExchange = useCallback((id: string) => {
-    setExchanges(prev => 
-      prev.map(e => e.id === id 
+  const connectExchange = useCallback(async (id: string) => {
+    // Only binance/bybit/coinbase supported via edge function
+    const supportedExchanges = ['binance', 'bybit', 'coinbase'];
+    
+    if (!supportedExchanges.includes(id)) {
+      // For unsupported exchanges (tradingview etc.), just mark as connected (webhook-based)
+      setExchanges(prev =>
+        prev.map(e => e.id === id
+          ? { ...e, connected: true, status: 'online' as const }
+          : e
+        )
+      );
+      toast.success(`${id} connected (webhook mode)`);
+      return;
+    }
+
+    setExchanges(prev =>
+      prev.map(e => e.id === id
         ? { ...e, status: 'connecting' as const }
         : e
       )
     );
-    
-    setTimeout(() => {
-      setExchanges(prev => 
-        prev.map(e => e.id === id 
-          ? { ...e, connected: true, status: 'online' as const, balance: Math.random() * 10000 }
+
+    try {
+      // Fetch real balance from exchange API
+      const result = await getExchangeBalance(id as 'binance' | 'bybit' | 'coinbase', true);
+
+      if (!result.success) {
+        throw new Error(result.error || 'Connection failed');
+      }
+
+      // Parse balance from response
+      let totalBalance = 0;
+      if (id === 'binance' && result.data?.balances) {
+        totalBalance = result.data.balances.reduce((sum, b) => {
+          const free = parseFloat(b.free) || 0;
+          const locked = parseFloat(b.locked) || 0;
+          return sum + free + locked;
+        }, 0);
+      } else if (result.data) {
+        // Generic fallback — show raw data exists
+        totalBalance = 0;
+      }
+
+      setExchanges(prev =>
+        prev.map(e => e.id === id
+          ? { ...e, connected: true, status: 'online' as const, balance: totalBalance }
           : e
         )
       );
-    }, 2000);
+      toast.success(`${id} connected successfully`);
+    } catch (err) {
+      console.error(`Failed to connect ${id}:`, err);
+      setExchanges(prev =>
+        prev.map(e => e.id === id
+          ? { ...e, status: 'offline' as const, connected: false }
+          : e
+        )
+      );
+      toast.error(`Failed to connect ${id}: ${err instanceof Error ? err.message : 'Unknown error'}`);
+    }
   }, []);
 
   const disconnectExchange = useCallback((id: string) => {
