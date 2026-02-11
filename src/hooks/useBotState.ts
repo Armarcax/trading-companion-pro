@@ -232,16 +232,15 @@ export function useBotState() {
         throw new Error(result.error || 'Connection failed');
       }
 
-      // Parse balance from response
+      // Parse USDT balance from response
       let totalBalance = 0;
       if (id === 'binance' && result.data?.balances) {
-        totalBalance = result.data.balances.reduce((sum, b) => {
-          const free = parseFloat(b.free) || 0;
-          const locked = parseFloat(b.locked) || 0;
-          return sum + free + locked;
-        }, 0);
+        // Show only USDT balance as the main balance
+        const usdtBalance = result.data.balances.find((b: { asset: string; free: string; locked: string }) => b.asset === 'USDT');
+        if (usdtBalance) {
+          totalBalance = parseFloat(usdtBalance.free) + parseFloat(usdtBalance.locked);
+        }
       } else if (result.data) {
-        // Generic fallback — show raw data exists
         totalBalance = 0;
       }
 
