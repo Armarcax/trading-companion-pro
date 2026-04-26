@@ -1,0 +1,31 @@
+// hayqContracts.ts — HAYQ Blockchain Registry
+// Sepolia Testnet — բոլոր deployed հասցեները
+
+export const HAYQ_CONTRACTS = {
+  HAYQ_TOKEN:       '0x7E5c8baC4447D8FA7010AEc8D400Face1b1BEC83',
+  VESTING_VAULT:    '0x45615F3D52262ba7F16d7E0182893492F1752baB',
+  STAKING:          '0x054f0CD967656df38853b61E3804Ba4fa7783bA8',
+  DIVIDEND_TRACKER: '0x2837077b63f8C2681b1eb0D5a776E638BA028e58',
+  MOCK_ORACLE:      '0x4f562cc34dd3b4C61f691B643BA6aA24a788d689',
+  MULTISIG:         '0x88B60b88B1F1667C13926d9F97E081069E3e65bD',
+  MOCK_ROUTER:      '0x7Bb6CB46524b47205124C9AAD86eE5ccBCE73c6c',
+  MOCK_ERC20:       '0x2136D92B222650821676eA17078D420dcCe00a3C',
+} as const;
+
+// Implementation (proxy) addresses
+export const HAYQ_IMPL = {
+  HAYQ_TOKEN:       '0xc7E45e4768FAA8795B00786eC0e71B993149aE9c',
+  VESTING_VAULT:    '0xd60CE25b670Dc7CA810497A0Ff7f2C0140aBD5c9',
+  STAKING:          '0xAA76e872001853bCb4b74d603148d261392CE5E1',
+  DIVIDEND_TRACKER: '0xd92283B8F6cF3fB34bED2cc69f91e92bFE70F40C',
+  MOCK_ORACLE:      '0x538d6965C48BF85379328585bbA482E574b0Ed59',
+  MULTISIG:         '0x5A541EF5D5A2Fb015b1fC8631651Ba53BaC9D208',
+  MOCK_ERC20:       '0x5fD69C563fEB5ee93b1A4bFEa14E41d272a82B73',
+} as const;
+
+export const SEPOLIA_CHAIN_ID = '0xaa36a7'; // 11155111
+export const SEPOLIA_RPC = 'https://rpc.sepolia.org';
+
+// Etherscan links
+export const explorerUrl = (addr: string) =>
+  `https://sepolia.etherscan.io/address/${addr}`;

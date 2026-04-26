@@ -1,0 +1,4 @@
+project_id = "rtnakjcvewjnbfxfdcph"
+
+[functions.exchange-api]
+verify_jwt = false
