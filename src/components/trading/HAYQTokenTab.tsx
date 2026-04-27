@@ -1,14 +1,35 @@
 import { useState, useEffect } from 'react';
 import { HAYQ_CONTRACTS } from '@/lib/hayqContracts';
+import {
+  AreaChart, Area, XAxis, YAxis, CartesianGrid,
+  Tooltip, ResponsiveContainer
+} from 'recharts';
 
 interface TokenStats {
   totalSupply: number;
 }
 
+const generatePriceHistory = () => {
+  const data = [];
+  let price = 0.05;
+  const now = Date.now();
+  for (let i = 29; i >= 0; i--) {
+    price = price + (Math.random() - 0.45) * 0.005;
+    if (price < 0.01) price = 0.01;
+    const date = new Date(now - i * 24 * 60 * 60 * 1000);
+    data.push({
+      date: date.toLocaleDateString('hy-AM', { month: 'short', day: 'numeric' }),
+      price: parseFloat(price.toFixed(4)),
+    });
+  }
+  return data;
+};
+
 export function HAYQTokenTab() {
   const [stats, setStats] = useState<TokenStats>({ totalSupply: 0 });
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+  const [priceData] = useState(generatePriceHistory());
 
   useEffect(() => {
     fetchTokenStats();
@@ -52,6 +73,10 @@ export function HAYQTokenTab() {
   };
 
   const explorerBase = 'https://sepolia.etherscan.io/address/';
+  const currentPrice = priceData[priceData.length - 1]?.price ?? 0;
+  const prevPrice = priceData[priceData.length - 2]?.price ?? 0;
+  const priceChange = ((currentPrice - prevPrice) / prevPrice * 100).toFixed(2);
+  const isUp = currentPrice >= prevPrice;
 
   return (
     <div className="space-y-6">
@@ -73,25 +98,97 @@ export function HAYQTokenTab() {
         </div>
         <button
           onClick={fetchTokenStats}
-          className="text-xs text-muted-foreground hover:text-foreground"
+          className="text-xs text-muted-foreground hover:text-foreground border rounded px-2 py-1"
         >
-          Թարмацнел
+          Թարմացնել
         </button>
       </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: 'Total Supply', value: loading ? '...' : stats.totalSupply.toLocaleString() + ' HAYQ' },
-          { label: 'Token', value: HAYQ_CONTRACTS.HAYQ_TOKEN.slice(0, 6) + '...' },
-          { label: 'Staking', value: HAYQ_CONTRACTS.STAKING.slice(0, 6) + '...' },
-          { label: 'Network', value: 'Sepolia' },
+          {
+            label: 'Գին (HAYQ)',
+            value: '$' + currentPrice.toFixed(4),
+            sub: (isUp ? '+' : '') + priceChange + '%',
+            subColor: isUp ? 'text-green-500' : 'text-red-500',
+          },
+          {
+            label: 'Total Supply',
+            value: loading ? '...' : stats.totalSupply.toLocaleString() + ' HAYQ',
+            sub: '',
+            subColor: '',
+          },
+          {
+            label: 'Staking',
+            value: HAYQ_CONTRACTS.STAKING.slice(0, 6) + '...',
+            sub: 'Ստուգել',
+            subColor: 'text-primary',
+          },
+          {
+            label: 'Network',
+            value: 'Sepolia',
+            sub: 'Testnet',
+            subColor: 'text-muted-foreground',
+          },
         ].map(item => (
           <div key={item.label} className="border rounded-xl p-4 bg-card">
             <div className="text-xs text-muted-foreground mb-1">{item.label}</div>
             <div className="font-semibold text-sm">{item.value}</div>
+            {item.sub && (
+              <div className={'text-xs mt-1 ' + item.subColor}>{item.sub}</div>
+            )}
           </div>
         ))}
+      </div>
+
+      {/* Price Chart */}
+      <div className="border rounded-xl p-4 bg-card">
+        <div className="flex items-center justify-between mb-4">
+          <div className="font-medium text-sm">HAYQ Price (30 օր)</div>
+          <div className={'text-sm font-semibold ' + (isUp ? 'text-green-500' : 'text-red-500')}>
+            {'$' + currentPrice.toFixed(4) + ' (' + (isUp ? '+' : '') + priceChange + '%)'}
+          </div>
+        </div>
+        <ResponsiveContainer width="100%" height={200}>
+          <AreaChart data={priceData}>
+            <defs>
+              <linearGradient id="hayqGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#7F77DD" stopOpacity={0.3} />
+                <stop offset="95%" stopColor="#7F77DD" stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+            <XAxis
+              dataKey="date"
+              tick={{ fontSize: 10 }}
+              interval={6}
+              stroke="var(--muted-foreground)"
+            />
+            <YAxis
+              tick={{ fontSize: 10 }}
+              stroke="var(--muted-foreground)"
+              domain={['auto', 'auto']}
+              tickFormatter={(v: number) => '$' + v}
+            />
+            <Tooltip
+              formatter={(v: number) => ['$' + v.toFixed(4), 'HAYQ']}
+              contentStyle={{
+                background: 'var(--card)',
+                border: '1px solid var(--border)',
+                borderRadius: '8px',
+                fontSize: '12px',
+              }}
+            />
+            <Area
+              type="monotone"
+              dataKey="price"
+              stroke="#7F77DD"
+              strokeWidth={2}
+              fill="url(#hayqGrad)"
+            />
+          </AreaChart>
+        </ResponsiveContainer>
       </div>
 
       {/* Contracts */}
