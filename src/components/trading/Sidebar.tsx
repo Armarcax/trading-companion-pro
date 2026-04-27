@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { LayoutDashboard, TrendingUp, RefreshCw, BarChart2, Settings, FileText, Shield, Layers, Send, Wifi, WifiOff } from 'lucide-react';
+import { LayoutDashboard, TrendingUp, RefreshCw, BarChart2, Settings, FileText, Shield, Layers, Send, Wifi, WifiOff, Coins } from 'lucide-react';
 import type { TabType } from '@/types/trading';
 import { cn } from '@/lib/utils';
 
@@ -11,6 +11,7 @@ const NAV: { tab: TabType; icon: React.ComponentType<{className?: string}>; key:
   { tab: 'trades',      icon: BarChart2,       key: 'nav.trades'      },
   { tab: 'reports',     icon: FileText,        key: 'nav.reports'     },
   { tab: 'telegram',    icon: Send,            key: 'nav.telegram' },
+  { tab: 'hayq',        icon: Coins,           key: 'nav.hayq',       badge: 'NEW' },
   { tab: 'settings',    icon: Settings,        key: 'nav.settings'    },
 ];
 

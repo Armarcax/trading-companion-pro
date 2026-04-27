@@ -59,4 +59,4 @@ export interface BotConfig {
   rsiPeriod: number;
 }
 
-export type TabType = 'dashboard' | 'strategies' | 'exchanges' | 'trades' | 'settings' | 'reports' | 'options' | 'telegram';
+export type TabType = 'dashboard' | 'strategies' | 'exchanges' | 'trades' | 'settings' | 'reports' | 'options' | 'telegram' | 'hayq';

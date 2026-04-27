@@ -12,6 +12,7 @@ import { RiskManagementTab } from '@/components/trading/RiskManagementTab';
 import { SignalsPanel } from '@/components/trading/SignalsPanel';
 import { OptionsTab } from '@/components/trading/OptionsTab';
 import { TelegramTab } from '@/components/trading/TelegramTab';
+import { HAYQTokenTab } from '@/components/trading/HAYQTokenTab'; // ← ՆՈՐ
 import { useBotState, type FeedSource } from '@/hooks/useBotState';
 import type { TabType } from '@/types/trading';
 
@@ -34,12 +35,13 @@ const Index = () => {
   const tabTitles: Record<TabType, string> = {
     dashboard: t('nav.dashboard'),
     strategies: t('nav.strategies'),
-    options: t('nav.options', { defaultValue: 'Օպցիոններ' }),
+    options: t('nav.options', { defaultValue: 'Օпционнер' }),
     exchanges: t('nav.exchanges'),
     trades: t('nav.trades'),
     settings: t('nav.settings'),
     reports: t('nav.reports'),
     telegram: 'Telegram',
+    hayq: 'HAYQ Token', // ← ՆՈՐ
   };
 
   const renderTab = () => {
@@ -70,6 +72,8 @@ const Index = () => {
         return <ReportsTab stats={stats} trades={trades} />;
       case 'telegram':
         return <TelegramTab config={telegramConfig} onUpdate={updateTelegramConfig} />;
+      case 'hayq': // ← ՆՈՐ
+        return <HAYQTokenTab />;
       default:
         return null;
     }
