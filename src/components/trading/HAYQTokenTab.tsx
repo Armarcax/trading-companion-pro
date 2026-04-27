@@ -2,19 +2,11 @@ import { useState, useEffect } from 'react';
 import { HAYQ_CONTRACTS } from '@/lib/hayqContracts';
 
 interface TokenStats {
-  price: number;
   totalSupply: number;
-  stakedAmount: number;
-  holders: number;
 }
 
 export function HAYQTokenTab() {
-  const [stats, setStats] = useState<TokenStats>({
-    price: 0,
-    totalSupply: 0,
-    stakedAmount: 0,
-    holders: 0,
-  });
+  const [stats, setStats] = useState<TokenStats>({ totalSupply: 0 });
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -27,18 +19,13 @@ export function HAYQTokenTab() {
     try {
       const eth = (window as any).ethereum;
       if (!eth) return;
-
-      const totalSupplyCall = async () => {
-        const sig = '0x18160ddd';
-        const res = await eth.request({
-          method: 'eth_call',
-          params: [{ to: HAYQ_CONTRACTS.HAYQ_TOKEN, data: sig }, 'latest'],
-        });
-        return Number(BigInt(res)) / 1e18;
-      };
-
-      const totalSupply = await totalSupplyCall();
-      setStats(prev => ({ ...prev, totalSupply }));
+      const sig = '0x18160ddd';
+      const res = await eth.request({
+        method: 'eth_call',
+        params: [{ to: HAYQ_CONTRACTS.HAYQ_TOKEN, data: sig }, 'latest'],
+      });
+      const totalSupply = Number(BigInt(res)) / 1e18;
+      setStats({ totalSupply });
     } catch (e) {
       console.error('Token stats error:', e);
     } finally {
@@ -64,6 +51,8 @@ export function HAYQTokenTab() {
     }
   };
 
+  const explorerBase = 'https://sepolia.etherscan.io/address/';
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -71,14 +60,14 @@ export function HAYQTokenTab() {
         <div>
           <h2 className="text-xl font-semibold">HAYQ Token</h2>
           <p className="text-sm text-muted-foreground">
-            Sepolia Testnet ·{' '}
-            
-              href={`https://sepolia.etherscan.io/address/${HAYQ_CONTRACTS.HAYQ_TOKEN}`}
+            {'Sepolia Testnet · '}
+            <a
+              href={explorerBase + HAYQ_CONTRACTS.HAYQ_TOKEN}
               target="_blank"
               rel="noopener noreferrer"
               className="text-primary hover:underline"
             >
-              {HAYQ_CONTRACTS.HAYQ_TOKEN.slice(0, 8)}...
+              {HAYQ_CONTRACTS.HAYQ_TOKEN.slice(0, 8) + '...'}
             </a>
           </p>
         </div>
@@ -86,22 +75,19 @@ export function HAYQTokenTab() {
           onClick={fetchTokenStats}
           className="text-xs text-muted-foreground hover:text-foreground"
         >
-          Թարմացնել
+          Թարмацнел
         </button>
       </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: 'Total Supply', value: loading ? '...' : `${stats.totalSupply.toLocaleString()} HAYQ` },
-          { label: 'Token Address', value: `${HAYQ_CONTRACTS.HAYQ_TOKEN.slice(0, 6)}...` },
+          { label: 'Total Supply', value: loading ? '...' : stats.totalSupply.toLocaleString() + ' HAYQ' },
+          { label: 'Token', value: HAYQ_CONTRACTS.HAYQ_TOKEN.slice(0, 6) + '...' },
           { label: 'Staking', value: HAYQ_CONTRACTS.STAKING.slice(0, 6) + '...' },
           { label: 'Network', value: 'Sepolia' },
         ].map(item => (
-          <div
-            key={item.label}
-            className="border rounded-xl p-4 bg-card"
-          >
+          <div key={item.label} className="border rounded-xl p-4 bg-card">
             <div className="text-xs text-muted-foreground mb-1">{item.label}</div>
             <div className="font-semibold text-sm">{item.value}</div>
           </div>
@@ -114,13 +100,13 @@ export function HAYQTokenTab() {
         {Object.entries(HAYQ_CONTRACTS).map(([key, addr]) => (
           <div key={key} className="flex items-center justify-between text-xs">
             <span className="text-muted-foreground">{key}</span>
-            
-              href={`https://sepolia.etherscan.io/address/${addr}`}
+            <a
+              href={explorerBase + addr}
               target="_blank"
               rel="noopener noreferrer"
               className="font-mono text-primary hover:underline"
             >
-              {addr.slice(0, 8)}...{addr.slice(-6)}
+              {addr.slice(0, 8) + '...' + addr.slice(-6)}
             </a>
           </div>
         ))}
@@ -131,9 +117,9 @@ export function HAYQTokenTab() {
         <div className="font-medium text-sm mb-3">Wallet Balance</div>
         {walletBalance !== null ? (
           <div className="text-2xl font-bold text-primary">
-            {walletBalance.toFixed(4)} HAYQ
+            {walletBalance.toFixed(4) + ' HAYQ'}
             {walletBalance >= 100 && (
-              <span className="ml-2 text-sm text-green-500">Premium ✅</span>
+              <span className="ml-2 text-sm text-green-500">Premium</span>
             )}
           </div>
         ) : (
